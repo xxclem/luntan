@@ -21,7 +21,7 @@
             display: flex;
             flex-direction: column;
         }
-            
+
         /* 顶部固定编辑区 */
         .editor-section {
             background: #fff;
@@ -32,8 +32,8 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        input[type="text"], textarea { 
-            width: 100%; 
+        input[type="text"], textarea { 
+            width: 100%; 
             display: block;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -54,7 +54,7 @@
 
         .btn-group { display: flex; gap: 6px; }
 
-        button { 
+        button { 
             padding: 0 12px;
             height: 38px;
             border: none;
@@ -70,13 +70,26 @@
         button:active { opacity: 0.7; }
 
         /* 内容展示区 */
-        #posts { 
-            flex: 1; 
-            overflow-y: scroll; 
-            -webkit-overflow-scrolling: touch; 
+        #posts { 
+            flex: 1; 
+            overflow-y: scroll; 
+            -webkit-overflow-scrolling: touch; 
             padding: 15px;
         }
-                    display: flex;
+
+        .post { 
+            background: #fff;
+            padding: 15px; 
+            margin-bottom: 15px; 
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+        }
+
+        .post-meta {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 10px;
+            display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #f2f2f2;
@@ -132,9 +145,29 @@
         localStorage.setItem("forum_posts", JSON.stringify(posts));
     }
 
+    function getTime() {
+        const d = new Date();
+        return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    }
 
+    function render() {
+        const container = document.getElementById("posts");
+        container.innerHTML = posts.map((p, index) => {
+            const floorNum = index + 1;
+            const name = p.username.trim() === "" ? "  " : p.username;
+            return `
+                <div class="post">
+                    <div class="post-meta">
+                        <div>
+                            <span class="floor-tag">${floorNum}L</span>
+                            <span class="user-tag">${name}</span>
                         </div>
-              
+                        <div class="action-links">
+                            <span class="quote-link" onclick="quote(${floorNum})">引用</span>
+                            <span class="delete-link" onclick="deletePost(${index})">删除</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #ccc; margin-bottom: 5px;">${p.time}</div>
                     <div class="post-content">${p.content}</div>
                 </div>
             `;
@@ -170,7 +203,8 @@
 
         posts.push({
             username: userEl.value,
-            content: contentEl.value
+            content: contentEl.value,
+            time: getTime()
         });
         save();
         render();
@@ -184,10 +218,11 @@
 
     function exportTXT() {
         if (posts.length === 0) return;
-          // 导出格式：楼层 + 用户名 + 时间 \n 内容 \n (这行是空行)
+        
+        // 导出格式：楼层 + 用户名 + 时间 \n 内容 \n (这行是空行)
         let text = posts.map((p, i) => {
             const name = p.username.trim() === "" ? "  " : p.username;
-            const header = `${i + 1}L  ${name}`;
+            const header = `${i + 1}L  ${name}  ${p.time}`;
             return `${header}\n${p.content}`;
         }).join('\n\n'); // 使用两个换行符实现“楼层间空一行”
 

@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>论坛体生成器-手机版</title>
+    <title>论坛体生成器-无时间版</title>
     <style>
         /* 锁定背景 */
-        html, body { 
-            position: fixed; 
-            width: 100%; 
-            height: 100%; 
-            overflow: hidden; 
-            margin: 0; 
+        html, body { 
+            position: fixed; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            margin: 0; 
             padding: 0;
         }
 
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
             background-color: #f5f5f5;
             display: flex;
             flex-direction: column;
@@ -32,8 +32,8 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        input[type="text"], textarea { 
-            width: 100%; 
+        input[type="text"], textarea { 
+            width: 100%; 
             display: block;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -54,7 +54,7 @@
 
         .btn-group { display: flex; gap: 6px; }
 
-        button { 
+        button { 
             padding: 0 12px;
             height: 38px;
             border: none;
@@ -70,17 +70,17 @@
         button:active { opacity: 0.7; }
 
         /* 内容展示区 */
-        #posts { 
-            flex: 1; 
-            overflow-y: scroll; 
-            -webkit-overflow-scrolling: touch; 
+        #posts { 
+            flex: 1; 
+            overflow-y: scroll; 
+            -webkit-overflow-scrolling: touch; 
             padding: 15px;
         }
 
-        .post { 
+        .post { 
             background: #fff;
-            padding: 15px; 
-            margin-bottom: 15px; 
+            padding: 15px; 
+            margin-bottom: 15px; 
             border-radius: 10px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.03);
         }
@@ -103,9 +103,9 @@
         .quote-link { color: #5c9ead; cursor: pointer; font-size: 13px; }
         .delete-link { color: #aaa; cursor: pointer; font-size: 13px; }
 
-        .post-content { 
-            word-break: break-all; 
-            white-space: pre-wrap; 
+        .post-content { 
+            word-break: break-all; 
+            white-space: pre-wrap; 
             font-size: 15px;
             line-height: 1.6;
             color: #333;
@@ -137,19 +137,15 @@
         const saved = localStorage.getItem("forum_posts");
         posts = saved ? JSON.parse(saved) : [];
         render();
-    } catch(e) { 
-        posts = []; 
+    } catch(e) { 
+        posts = []; 
     }
 
     function save() {
         localStorage.setItem("forum_posts", JSON.stringify(posts));
     }
 
-    function getTime() {
-        const d = new Date();
-        return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-    }
-
+    // 渲染楼层
     function render() {
         const container = document.getElementById("posts");
         container.innerHTML = posts.map((p, index) => {
@@ -167,19 +163,20 @@
                             <span class="delete-link" onclick="deletePost(${index})">删除</span>
                         </div>
                     </div>
-                    <div style="font-size: 11px; color: #ccc; margin-bottom: 5px;">${p.time}</div>
                     <div class="post-content">${p.content}</div>
                 </div>
             `;
         }).join('');
     }
 
+    // 引用功能
     function quote(floor) {
         const contentEl = document.getElementById("content");
         contentEl.value = `>>No.${floor}\n` + contentEl.value;
         contentEl.focus();
     }
 
+    // 删除单层功能
     function deletePost(index) {
         if (confirm(`确定要删除第 ${index + 1} 楼吗？`)) {
             posts.splice(index, 1);
@@ -188,6 +185,7 @@
         }
     }
 
+    // 清空所有功能
     function clearAll() {
         if (confirm("确定要【清空所有】内容吗？此操作不可撤销。")) {
             posts = [];
@@ -196,6 +194,7 @@
         }
     }
 
+    // 添加楼层
     function addPost() {
         const userEl = document.getElementById("username");
         const contentEl = document.getElementById("content");
@@ -203,32 +202,31 @@
 
         posts.push({
             username: userEl.value,
-            content: contentEl.value,
-            time: getTime()
+            content: contentEl.value
         });
         save();
         render();
         contentEl.value = "";
-        
+        
         const container = document.getElementById("posts");
         setTimeout(() => {
             container.scrollTop = container.scrollHeight;
         }, 100);
     }
 
+    // 导出功能
     function exportTXT() {
         if (posts.length === 0) return;
-        
-        // 导出格式：楼层 + 用户名 + 时间 \n 内容 \n (这行是空行)
+        
         let text = posts.map((p, i) => {
             const name = p.username.trim() === "" ? "  " : p.username;
-            const header = `${i + 1}L  ${name}  ${p.time}`;
+            const header = `${i + 1}L  ${name}`;
             return `${header}\n${p.content}`;
-        }).join('\n\n'); // 使用两个换行符实现“楼层间空一行”
+        }).join('\n\n'); 
 
         let blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
         let anchor = document.createElement('a');
-        anchor.download = "forum_novel.txt";
+        anchor.download = "forum_novel_no_time.txt";
         anchor.href = window.URL.createObjectURL(blob);
         anchor.click();
     }

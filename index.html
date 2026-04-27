@@ -3,32 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>论坛体生成器-固定无时间版</title>
+    <title>论坛体-绝对锁定版</title>
     <style>
-        /* 1. 核心：锁定全屏高度，禁止 body 滚动 */
+        /* 强制全屏且禁止原生滚动 */
         html, body { 
-            position: fixed; 
-            width: 100%; 
-            height: 100%; 
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%; 
             overflow: hidden; 
-            margin: 0; 
-            padding: 0;
-        }
-
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
+            margin: 0; padding: 0;
             background-color: #f5f5f5;
-            display: flex;
-            flex-direction: column; /* 纵向排列：上部编辑，下部展示 */
         }
 
-        /* 2. 顶部编辑区：强制固定，不随内容滚动 */
+        /* 顶部编辑区：绝对定位在上方 */
         .editor-section {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 185px; /* 固定一个足够的高度 */
             background: #fff;
             padding: 12px 15px;
             border-bottom: 2px solid #5c9ead;
-            z-index: 999;
-            flex-shrink: 0; /* 禁止被挤压 */
+            z-index: 1000;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
@@ -39,79 +34,54 @@
             border-radius: 8px;
             padding: 10px;
             margin-bottom: 8px;
-            font-size: 16px; /* 16px防止手机端点击时缩放 */
+            font-size: 16px;
             background: #fafafa;
             outline: none;
         }
-
-        textarea { height: 85px; resize: none; }
+        textarea { height: 80px; resize: none; }
 
         .controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
         }
-
         .btn-group { display: flex; gap: 8px; }
-
         button { 
-            height: 40px;
-            padding: 0 15px;
-            border: none;
-            border-radius: 8px;
-            background-color: #5c9ead;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
+            height: 38px; padding: 0 12px;
+            border: none; border-radius: 8px;
+            background-color: #5c9ead; color: white;
+            font-weight: bold; font-size: 14px;
         }
-
         .export-btn { background-color: #777; }
         .clear-btn { background-color: #d9534f; }
-        button:active { opacity: 0.7; }
 
-        /* 3. 内容展示区：只有这里可以自由滚动 */
+        /* 内容展示区：绝对定位，从编辑区下方开始，撑满剩余空间 */
         #posts { 
-            flex: 1; /* 占据屏幕剩余所有空间 */
-            overflow-y: scroll; 
-            -webkit-overflow-scrolling: touch; /* iOS 顺滑滚动 */
+            position: absolute;
+            top: 185px; /* 必须等于编辑区的高度 */
+            left: 0; right: 0; bottom: 0;
+            overflow-y: scroll; /* 只有这里允许滚动 */
+            -webkit-overflow-scrolling: touch;
             padding: 15px;
         }
 
         .post { 
-            background: #fff;
-            padding: 15px; 
-            margin-bottom: 15px; 
-            border-radius: 10px;
+            background: #fff; padding: 15px; 
+            margin-bottom: 15px; border-radius: 10px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-            flex-shrink: 0;
         }
-
         .post-meta {
-            font-size: 13px;
-            color: #999;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #f2f2f2;
-            padding-bottom: 8px;
+            font-size: 13px; color: #999;
+            margin-bottom: 8px; display: flex;
+            justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #f2f2f2; padding-bottom: 8px;
         }
-
         .floor-tag { color: #d9534f; font-weight: bold; }
         .user-tag { color: #337ab7; font-weight: bold; margin-left: 5px; }
-
         .action-links { display: flex; gap: 12px; }
         .quote-link { color: #5c9ead; cursor: pointer; }
         .delete-link { color: #aaa; cursor: pointer; }
-
-        .post-content { 
-            word-break: break-all; 
-            white-space: pre-wrap; 
-            font-size: 15px;
-            line-height: 1.6;
-            color: #333;
-        }
+        .post-content { word-break: break-all; white-space: pre-wrap; font-size: 15px; line-height: 1.6; color: #333; }
     </style>
 </head>
 <body>
@@ -119,13 +89,12 @@
 <div class="editor-section">
     <input id="username" type="text" placeholder="用户名（留空显示为空格）">
     <textarea id="content" placeholder="输入回帖内容..."></textarea>
-
     <div class="controls">
         <div class="btn-group">
             <button type="button" class="clear-btn" onclick="clearAll()">清空</button>
             <button type="button" class="export-btn" onclick="exportTXT()">导出TXT</button>
         </div>
-        <button type="button" onclick="addPost()" style="flex: 1;">添加楼层</button>
+        <button type="button" onclick="addPost()" style="flex: 1; margin-left: 10px;">添加楼层</button>
     </div>
 </div>
 
@@ -133,17 +102,13 @@
 
 <script>
     var posts = [];
-
-    // 初始化
     try {
         const saved = localStorage.getItem("forum_posts");
         posts = saved ? JSON.parse(saved) : [];
         render();
     } catch(e) { posts = []; }
 
-    function save() {
-        localStorage.setItem("forum_posts", JSON.stringify(posts));
-    }
+    function save() { localStorage.setItem("forum_posts", JSON.stringify(posts)); }
 
     function render() {
         const container = document.getElementById("posts");
@@ -194,20 +159,12 @@
         const userEl = document.getElementById("username");
         const contentEl = document.getElementById("content");
         if (!contentEl.value.trim()) return;
-
-        posts.push({
-            username: userEl.value,
-            content: contentEl.value
-        });
+        posts.push({ username: userEl.value, content: contentEl.value });
         save();
         render();
         contentEl.value = "";
-        
-        // 自动滚动到展示区底部
         const container = document.getElementById("posts");
-        setTimeout(() => {
-            container.scrollTop = container.scrollHeight;
-        }, 100);
+        setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
     }
 
     function exportTXT() {
@@ -216,7 +173,6 @@
             const name = p.username.trim() === "" ? "  " : p.username;
             return `${i + 1}L  ${name}\n${p.content}`;
         }).join('\n\n'); 
-
         let blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
         let anchor = document.createElement('a');
         anchor.download = "story.txt";
